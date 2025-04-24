@@ -1,17 +1,28 @@
-import mongoose from 'mongoose';
+import { Sequelize } from 'sequelize';
+import dotenv from 'dotenv';
 
-const connectDB = async (uri) => {
+dotenv.config();
+
+// Khởi tạo sequelize instance
+const sequelize = new Sequelize(process.env.POSTGRESQL_URI, {
+    dialect: 'postgres',
+    logging: false,
+    pool: {
+        max: 5,
+        min: 0,
+        acquire: 30000,
+        idle: 10000
+    }
+});
+
+const connectDB = async () => {
     try {
-        await mongoose.connect(uri, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-        });
-
-        console.log('MongoDB connected successfully');
+        await sequelize.authenticate();
+        console.log('PostgreSQL connected successfully');
     } catch (error) {
-        console.error('MongoDB connection failed:', error.message);
+        console.error('PostgreSQL connection failed:', error.message);
         process.exit(1);
     }
 };
 
-export default connectDB;
+export { sequelize, connectDB };

@@ -3,6 +3,8 @@ import dotenv from 'dotenv';
 import { ErrorHanlder } from "./middlewares/ErrorHandler.js";
 import cors from "cors";
 import "express-async-errors";
+import { sequelize, connectDB } from "./database/connect.js";
+import { models } from "./models/index.js";
 
 dotenv.config();
 
@@ -17,18 +19,20 @@ import authRouter from "./routes/authRoutes.js";
 app.use("/api/v1/auth", authRouter);
 app.use(ErrorHanlder);
 
-// Connect Database
-import connectDB from "./database/connect.js";
-
 const start = async () => {
     try {
-        console.log(process.env);
-        await connectDB(String(process.env.MONGODB_URI));
+        await connectDB();
+        console.log('Database connection established');
+        
+        // Sync all models with database
+        await sequelize.sync({ alter: true });
+        console.log('Database tables synchronized');
+        
         app.listen(process.env.PORT, () => {
             console.log('Listening on port ' + process.env.PORT);
         });
     } catch (error) {
-        console.log(error);
+        console.log('Failed to start server:', error);
     }
 };
 
