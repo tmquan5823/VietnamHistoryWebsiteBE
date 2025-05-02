@@ -25,7 +25,7 @@ const start = async () => {
         console.log('Database connection established');
         
         // Sync all models with database
-        await sequelize.sync({ alter: true });
+        await sequelize.sync({ force: true });
         console.log('Database tables synchronized');
         
         app.listen(process.env.PORT, () => {
