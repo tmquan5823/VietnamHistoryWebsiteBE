@@ -9,15 +9,20 @@ import { models } from "./models/index.js";
 dotenv.config();
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cors());
 
 // Router
 import authRouter from "./routes/authRoutes.js";
-
+import periodsRouter from "./routes/periodsRoutes.js";
+import historyDocumentsRouter from "./routes/historyDocumentRoutes.js";
+import documentTypesRouter from "./routes/documentTypesRoutes.js";
 app.use("/api/v1/auth", authRouter);
-app.use(ErrorHanlder);
+app.use("/api/v1/periods", periodsRouter);
+app.use("/api/v1/history-documents", historyDocumentsRouter);
+app.use("/api/v1/document-types", documentTypesRouter);
+app.use(ErrorHanlder);  
 
 const start = async () => {
     try {
@@ -25,7 +30,7 @@ const start = async () => {
         console.log('Database connection established');
         
         // Sync all models with database
-        await sequelize.sync({ force: true });
+        await sequelize.sync({ alter: true });
         console.log('Database tables synchronized');
         
         app.listen(process.env.PORT, () => {

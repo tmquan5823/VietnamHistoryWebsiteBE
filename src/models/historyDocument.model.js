@@ -10,6 +10,9 @@ const HistoryDocument = sequelize.define('HistoryDocument', {
     primaryKey: true,
     autoIncrement: true
   },
+  image: {
+    type: DataTypes.STRING(255)
+  },
   title: {
     type: DataTypes.STRING(255)
   },
@@ -36,16 +39,15 @@ const HistoryDocument = sequelize.define('HistoryDocument', {
   end_year: {
     type: DataTypes.INTEGER
   },
+  key_words: {
+    type: DataTypes.TEXT  // hoặc STRING(500) nếu bạn muốn giới hạn độ dài
+  },
   uploaded_by: {
     type: DataTypes.INTEGER,
     references: {
       model: User,
       key: 'id'
     }
-  },
-  approved: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false
   },
   created_at: {
     type: DataTypes.DATE,
