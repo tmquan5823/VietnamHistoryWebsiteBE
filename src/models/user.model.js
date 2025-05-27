@@ -26,7 +26,15 @@ const User = sequelize.define('User', {
   avatar: {
     type: DataTypes.STRING(255)
   },
-  created_at: {
+  gender: {
+    type: DataTypes.ENUM('male', 'female', 'other'),
+    allowNull: true
+  },
+  birthday: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  createdAt: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW
   }

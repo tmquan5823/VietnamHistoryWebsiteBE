@@ -12,6 +12,9 @@ const getDocumentTypes = async (data) => {
 
 const createDocumentType = async (data) => {
     const { name } = data.body;
+    if (!name) {
+        throw new BadRequestError("Thiếu tên loại tài liệu");
+    }
     const documentType = await DocumentType.create({ name });
     return documentType;
 };

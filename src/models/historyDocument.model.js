@@ -49,12 +49,13 @@ const HistoryDocument = sequelize.define('HistoryDocument', {
       key: 'id'
     }
   },
-  created_at: {
+  createdAt: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW
   },
-  updated_at: {
-    type: DataTypes.DATE
+  updatedAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
   }
 }, {
   tableName: 'history_documents',

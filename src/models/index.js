@@ -1,5 +1,3 @@
-import { sequelize } from '../database/connect.js';
-import { DataTypes } from 'sequelize';
 import AdminLog from './adminLog.model.js';
 import DocumentType from './documentType.model.js';
 import EmailVerification from './emailVerification.model.js';
@@ -13,6 +11,8 @@ import QuizQuestion from './quizQuestion.model.js';
 import QuizSet from './quizSet.model.js';
 import UserToken from './userToken.model.js';
 import User from './user.model.js';
+import Topic from './topic.model.js';
+import QuizSetTopic from './quizSetTopic.model.js';
 
 // Export all models
 export const models = {
@@ -28,8 +28,24 @@ export const models = {
   QuizLeaderboard,
   QuizQuestion,
   QuizSet,
-  UserToken
+  UserToken,
+  Topic,
+  QuizSetTopic
 };
 
 // Define associations here if needed
 // Example: User.hasMany(Post);
+
+// Định nghĩa quan hệ n-n giữa QuizSet và Topic
+QuizSet.belongsToMany(Topic, {
+  through: QuizSetTopic,
+  foreignKey: 'quiz_set_id',
+  otherKey: 'topic_id',
+  as: 'topics'
+});
+Topic.belongsToMany(QuizSet, {
+  through: QuizSetTopic,
+  foreignKey: 'topic_id',
+  otherKey: 'quiz_set_id',
+  as: 'quizSets'
+});

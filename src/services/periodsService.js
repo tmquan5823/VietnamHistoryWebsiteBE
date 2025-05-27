@@ -1,14 +1,6 @@
 import Period from "../models/period.model.js";
-import BadRequestError from "../errors/BadRequestError.js";
-import bcrypt from "bcrypt";
 import dotenv from "dotenv";
-import NotFoundError from "../errors/NotFoundError.js";
-import UnauthorizedError from "../errors/UnauthorizedError.js";
-import ForbiddenError from "../errors/ForbiddenError.js";
-import jwt from "jsonwebtoken";
-import randToken from "rand-token";
-import UserToken from "../models/userToken.model.js";
-import HistoryDocument from "../models/historyDocument.model.js";
+
 
 
 dotenv.config();
@@ -20,6 +12,9 @@ const getPeriods = async (data) => {
 
 const createPeriod = async (data) => {
     const { name, description, start_year, end_year } = data.body;
+    if (!name || !description || !start_year || !end_year) {
+        throw new BadRequestError("Thiếu thông tin");
+    }
     const period = await Period.create({ name, description, start_year, end_year });
     return period;
 };

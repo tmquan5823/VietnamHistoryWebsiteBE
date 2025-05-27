@@ -8,6 +8,9 @@ const QuizSet = sequelize.define('QuizSet', {
     primaryKey: true,
     autoIncrement: true
   },
+  image: {
+    type: DataTypes.STRING(255)
+  },
   title: {
     type: DataTypes.STRING(255)
   },
@@ -21,21 +24,27 @@ const QuizSet = sequelize.define('QuizSet', {
       key: 'id'
     }
   },
-  approved: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false
+  status: {
+    type: DataTypes.ENUM('unpublish', 'pending', 'publish', 'approved', 'inactive'),
+    defaultValue: 'unpublish',
   },
-  is_public: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true
-  },
-  created_at: {
+  createdAt: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW
-  }
+  },
+  updatedAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
+  },
+  image_public_id: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+  },
 }, {
   tableName: 'quiz_sets',
   timestamps: false
 });
 
-export default QuizSet; 
+export default QuizSet;
+
+QuizSet.belongsTo(User, { foreignKey: 'created_by', as: 'creator' }); 

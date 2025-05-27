@@ -26,6 +26,10 @@ const QuizLeaderboard = sequelize.define('QuizLeaderboard', {
   score: {
     type: DataTypes.INTEGER
   },
+  is_finished: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
   finished_at: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW
@@ -34,5 +38,10 @@ const QuizLeaderboard = sequelize.define('QuizLeaderboard', {
   tableName: 'quiz_leaderboard',
   timestamps: false
 });
+
+QuizLeaderboard.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+
+QuizSet.hasMany(QuizLeaderboard, { foreignKey: 'quiz_id', onDelete: 'CASCADE' });
+QuizLeaderboard.belongsTo(QuizSet, { foreignKey: 'quiz_id' });
 
 export default QuizLeaderboard; 

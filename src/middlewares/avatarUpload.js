@@ -16,7 +16,7 @@ cloudinary.config({
     cloudinary: cloudinary,
     params: async (req, file) => {
       return {
-        folder: 'avatars',
+        folder: 'images',
         format: 'jpg',
       };
     },
@@ -24,4 +24,4 @@ cloudinary.config({
   
   const upload = multer({ storage: storage });
   
-  export default upload.single('avatar');
+  export default upload;

@@ -1,5 +1,4 @@
 import Joi from "joi";
-import { StatusCodes } from "http-status-codes";
 import ValidationError from "../errors/ValidationError.js";
 
 const signUp = async (req, res, next)=>{
@@ -7,6 +6,8 @@ const signUp = async (req, res, next)=>{
         email: Joi.string().email().required(),
         password: Joi.string().required().min(3).max(30).trim().strict(),
         fullname: Joi.string().required().trim().strict(),
+        gender: Joi.string().valid('male', 'female', 'other').required(),
+        birthday: Joi.date().required(),
     });
 
     try {

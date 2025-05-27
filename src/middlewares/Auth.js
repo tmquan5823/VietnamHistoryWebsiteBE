@@ -52,6 +52,8 @@ const AdminAuth = async (req, res, next) => {
 };
 
 const ignoreExpirationAuth = (req, res,next) => {
+    console.log(req.headers);
+    console.log(req.headers.authorization);
     if(!req.headers || !req.headers.authorization){
         throw new UnauthorizedError("Không có quyền truy cập!");
     }
