@@ -26,12 +26,13 @@ const ForumPostComment = sequelize.define('ForumPostComment', {
   content: {
     type: DataTypes.TEXT
   },
-  created_at: {
+  createdAt: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW
   },
-  updated_at: {
-    type: DataTypes.DATE
+  updatedAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
   }
 }, {
   tableName: 'forum_post_comments',

@@ -23,7 +23,7 @@ const ForumPostLike = sequelize.define('ForumPostLike', {
       key: 'id'
     }
   },
-  created_at: {
+  createdAt: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW
   }

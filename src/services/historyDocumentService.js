@@ -31,8 +31,8 @@ const createDocument = async (data) => {
         start_year,
         end_year,
         uploaded_by: userId,
-        created_at: new Date(),
-        updated_at: new Date(),
+        createdAt: new Date(),
+        createdAt: new Date(),
         image
     });
 
@@ -75,6 +75,9 @@ const getDocuments = async (req) => {
 
 const getDocumentById = async (req) => {
     const { id } = req.params;
+    if (!id) {
+        throw new BadRequestError("Thiếu id");
+    }
     const document = await HistoryDocument.findByPk(id);
     if (!document) {
         throw new NotFoundError("Không tìm thấy tài liệu!");
@@ -84,7 +87,7 @@ const getDocumentById = async (req) => {
 
 const getDocumentsTitle = async (req) => {
     let where = {};
-    const { typeId, periodId, startYear, endYear, page, limit, keyWords } = req.query;
+    const { typeId, periodId, startYear, endYear, page, limit, keyWords, sort } = req.query;
     if (typeId) where.type_id = typeId;
     if (periodId) where.period_id = periodId;
     if (startYear && endYear) {
@@ -98,9 +101,11 @@ const getDocumentsTitle = async (req) => {
         const decodedKeyWords = decodeURIComponent(keyWords.replace(/\+/g, ' '));
         where.key_words = { [Op.iLike]: `%${decodedKeyWords}%` };
     }
+    const order = [["start_year", sort === "desc" ? "DESC" : "ASC"]];
     let options = {
         where,
         attributes: ['title', 'id', 'start_year', 'end_year', 'type_id', 'period_id', 'image'],
+        order,
     };
     if (page && limit) {
         options.offset = (parseInt(page) - 1) * parseInt(limit);
@@ -112,7 +117,13 @@ const getDocumentsTitle = async (req) => {
 
 const updateDocument = async (req) => {
     const { id } = req.params;
+    if (!id) {
+        throw new BadRequestError("Thiếu id");
+    }
     const { title, content, type_id, period_id, start_year, end_year, key_words } = req.body;
+    if (!title || !content || !type_id || !period_id || !start_year || !end_year) {
+        throw new BadRequestError("Thiếu thông tin bắt buộc!");
+    }
     const document = await HistoryDocument.findByPk(id);
     if (!document) {
         throw new NotFoundError("Không tìm thấy tài liệu!");
@@ -123,6 +134,9 @@ const updateDocument = async (req) => {
 
 const deleteDocument = async (req) => {
     const { id } = req.params;
+    if (!id) {
+        throw new BadRequestError("Thiếu id");
+    }
     const document = await HistoryDocument.findByPk(id);
     if (!document) {
         throw new NotFoundError("Không tìm thấy tài liệu!");

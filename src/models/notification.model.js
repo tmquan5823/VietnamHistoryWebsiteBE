@@ -2,7 +2,7 @@ import { DataTypes } from 'sequelize';
 import { sequelize } from '../database/connect.js';
 import User from './user.model.js';
 
-const EmailVerification = sequelize.define('EmailVerification', {
+const Notification = sequelize.define('Notification', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -10,35 +10,40 @@ const EmailVerification = sequelize.define('EmailVerification', {
   },
   user_id: {
     type: DataTypes.INTEGER,
-    allowNull: false,
     references: {
       model: User,
       key: 'id'
     }
   },
-  otp_code: {
-    type: DataTypes.STRING(10),
+  title: {
+    type: DataTypes.STRING(255),
     allowNull: false
   },
-  is_verified: {
+  content: {
+    type: DataTypes.TEXT,
+    allowNull: false
+  },
+  type: {
+    type: DataTypes.STRING(32),
+    allowNull: true
+  },
+  is_read: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
   },
-  expires_at: {
-    type: DataTypes.DATE,
-    allowNull: false
+  url: {
+    type: DataTypes.STRING(255),
+    allowNull: true
   },
   createdAt: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW
   }
 }, {
-  tableName: 'email_verifications',
+  tableName: 'notifications',
   timestamps: false
 });
 
-// Define associations
-EmailVerification.belongsTo(User, { foreignKey: 'user_id' });
-User.hasOne(EmailVerification, { foreignKey: 'user_id' });
+export default Notification;
 
-export default EmailVerification; 
+Notification.belongsTo(User, { foreignKey: 'user_id', as: 'user' });

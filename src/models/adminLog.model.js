@@ -19,7 +19,7 @@ const AdminLog = sequelize.define('AdminLog', {
     type: DataTypes.ENUM('approve_post', 'delete_post', 'approve_quiz', 'delete_quiz', 'other'),
     allowNull: false
   },
-  created_at: {
+  createdAt: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW
   }

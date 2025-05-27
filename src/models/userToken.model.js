@@ -28,7 +28,7 @@ const UserToken = sequelize.define('UserToken', {
     type: DataTypes.DATE,
     allowNull: false
   },
-  created_at: {
+  createdAt: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW
   },

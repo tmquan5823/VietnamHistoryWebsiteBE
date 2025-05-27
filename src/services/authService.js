@@ -11,7 +11,7 @@ import ForbiddenError from "../errors/ForbiddenError.js";
 import jwt from "jsonwebtoken";
 import randToken from "rand-token";
 import UserToken from "../models/userToken.model.js";
-
+import { SALT_ROUNDS } from "../constaints.js";
 
 dotenv.config();
 
@@ -26,7 +26,7 @@ const transporter = nodemailer.createTransport({
 
 //Sign up
 const signUp = async (data) => {
-    const {email, password, fullname} = data.body;
+    const {email, password, fullname, gender, birthday} = data.body;
 
     try {        
         const emailIsExist = await User.findOne({
@@ -36,14 +36,16 @@ const signUp = async (data) => {
             throw new BadRequestError("Email đã tồn tại, vui lòng đăng ký với email khác!");
         }
         
-        const saltRounds = 10;
+        const saltRounds = SALT_ROUNDS;
         const hashedPass = await bcrypt.hash(password, saltRounds); 
         const newUser = await User.create({
             email, 
             password: hashedPass,
             fullname,
             role: "user",
-            avatar: process.env.AVT_DEFAULT
+            gender,
+            birthday,
+            avatar: gender === "female" ? process.env.FEMALE_AVT_DEFAULT : process.env.MALE_AVT_DEFAULT
         });
 
         const result = await sendOTPVerificationEmail(newUser);
@@ -56,9 +58,8 @@ const signUp = async (data) => {
 const sendOTPVerificationEmail = async (user) => {
     try{
         const otp = `${Math.floor(1000 + Math.random() * 9000)}`;
-        const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+        const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
-        // Create email verification record
         await EmailVerification.create({
             user_id: user.id,
             otp_code: otp,
@@ -88,11 +89,7 @@ const sendOTPVerificationEmail = async (user) => {
 
 export const verifyOTP = async (data) => {
     try {
-        console.log('Data received:', data);
-        console.log('Data body:', data.body);
         const {email, otp} = data.body;
-        console.log('Email:', email);
-        console.log('OTP:', otp);
         if(!email || !otp){
             throw new BadRequestError("OTP không hợp lệ!");
         }
@@ -110,8 +107,6 @@ export const verifyOTP = async (data) => {
                 is_verified: false
             }
         });
-
-        console.log(verification);
 
         if (!verification) {
             throw new BadRequestError("Không tìm thấy mã xác thực, vui lòng yêu cầu mã mới!");

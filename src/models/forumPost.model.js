@@ -28,12 +28,13 @@ const ForumPost = sequelize.define('ForumPost', {
     type: DataTypes.BOOLEAN,
     defaultValue: false
   },
-  created_at: {
+  createdAt: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW
   },
-  updated_at: {
-    type: DataTypes.DATE
+  updatedAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
   }
 }, {
   tableName: 'forum_posts',
