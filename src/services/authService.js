@@ -207,12 +207,10 @@ const login = async (data) => {
         }
 
         const refreshToken = randToken.generate(256);
-        
-        // Calculate token expiration time
+ 
         const expiresAt = new Date();
-        expiresAt.setHours(expiresAt.getHours() + 1); // 1 hour from now
+        expiresAt.setHours(expiresAt.getHours() + 1);
 
-        // Create new token record
         await UserToken.create({
             user_id: user.id,
             access_token: accessToken,
