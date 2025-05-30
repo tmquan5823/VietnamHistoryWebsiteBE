@@ -33,6 +33,7 @@ import topicRouter from "./routes/topicRoutes.js";
 import uploadRouter from "./routes/uploadRoutes.js";
 import forumPostRouter from "./routes/forumPostRoutes.js";
 import profileRouter from "./routes/profileRoutes.js";
+import userRouter from "./routes/userRoutes.js";
 
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/periods", periodsRouter);
@@ -42,6 +43,7 @@ app.use("/api/v1/quiz-sets", quizRouter);
 app.use("/api/v1/topics", topicRouter);
 app.use("/api/v1/forum-posts", forumPostRouter);
 app.use("/api/v1/profile", profileRouter);
+app.use("/api/v1/users", userRouter);
 app.use("/api/v1/upload-image", uploadRouter);
 
 app.use(ErrorHanlder);  
