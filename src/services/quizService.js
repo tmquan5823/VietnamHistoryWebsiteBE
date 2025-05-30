@@ -685,7 +685,7 @@ const rejectQuizSet = async (req) => {
         content: `Quiz "${quizSet.title}" đã bị admin từ chối. Lý do: ${req.body.reject_reason || "Không rõ"}`,
         is_read: false,
         type: 'rejected',
-        url: `/my_quiz/${quizSet.id}`
+        url: `/my-quiz/${quizSet.id}`
     });
     req.io.emit("newNotification", notification.toJSON());
     return quizSet;

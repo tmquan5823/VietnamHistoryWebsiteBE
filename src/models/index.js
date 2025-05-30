@@ -13,7 +13,7 @@ import UserToken from './userToken.model.js';
 import User from './user.model.js';
 import Topic from './topic.model.js';
 import QuizSetTopic from './quizSetTopic.model.js';
-
+import ForumPostTopic from './forumPostTopic.model.js';
 // Export all models
 export const models = {
   User,
@@ -30,7 +30,8 @@ export const models = {
   QuizSet,
   UserToken,
   Topic,
-  QuizSetTopic
+  QuizSetTopic,
+  ForumPostTopic
 };
 
 // Define associations here if needed

@@ -14,9 +14,6 @@ const ForumPost = sequelize.define('ForumPost', {
   content: {
     type: DataTypes.TEXT
   },
-  image_url: {
-    type: DataTypes.STRING(255)
-  },
   created_by: {
     type: DataTypes.INTEGER,
     references: {
@@ -24,9 +21,9 @@ const ForumPost = sequelize.define('ForumPost', {
       key: 'id'
     }
   },
-  approved: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false
+  status: {
+    type: DataTypes.ENUM('local', 'pending', 'approved', 'inactive', 'rejected', 'needs_review'),
+    defaultValue: 'local'
   },
   createdAt: {
     type: DataTypes.DATE,
@@ -40,5 +37,7 @@ const ForumPost = sequelize.define('ForumPost', {
   tableName: 'forum_posts',
   timestamps: false
 });
+
+ForumPost.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
 
 export default ForumPost; 

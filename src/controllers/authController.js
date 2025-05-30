@@ -5,7 +5,6 @@ import { authService } from "../services/authService.js";
 const signUp = async (req, res, next) => {
     try {
         const result = await authService.signUp(req);
-        console.log(result);
         return res.status(StatusCodes.OK).json({
             status: "pending",
             message: "Mã OTP đã được gửi tới email của bạn!",
