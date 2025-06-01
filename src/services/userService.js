@@ -1,6 +1,9 @@
 import User from "../models/user.model.js";
 import BadRequestError  from "../errors/BadRequestError.js";
 import NotFoundError from "../errors/NotFoundError.js";
+import bcrypt from "bcrypt";
+import { SALT_ROUNDS } from "../constaints.js";
+
 const getAllUsers = async (req) => {
     try {
         const userId = req.userId;
@@ -157,11 +160,34 @@ const updateUser = async (req) => {
     }
 }
 
+const createUser = async (req) => {
+    try {
+        const { fullname, email, password, gender, birthday, role } = req.body;
+        if(!email || !password || !fullname || !gender || !birthday || !role){
+            throw new BadRequestError("Các trường là bắt buộc");
+        }
+        const existingUser = await User.findOne({ where: { email } });
+        if (existingUser) {
+            throw new BadRequestError("Email đã tồn tại");
+        }
+        const hashedPass = await bcrypt.hash(password, SALT_ROUNDS);
+        let avatar = undefined;
+        if (req.file && req.file.path) {
+            avatar = req.file.path;
+        }
+        const user = await User.create({ fullname, email, password: hashedPass, gender, birthday, role, avatar });
+        return user;
+    } catch(err){
+        throw err;
+    }
+}
+
 export const userService = {
     getAllUsers,
     getUserById,
     updateUserRole,
     banUser,
     unBanUser,
-    updateUser
+    updateUser,
+    createUser
 }
