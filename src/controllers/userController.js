@@ -79,11 +79,26 @@ const updateUser = async (req, res, next) => {
     }
 }
 
+const createUser = async (req, res, next) => {
+    try {
+        const result = await userService.createUser(req);
+        return res.status(StatusCodes.OK).json({
+            status: "success",
+            message: "Tạo tài khoản thành công!",
+            data: result
+        });
+    } catch(err){
+        next(err);
+    }
+}
+
+
 export const userController = {
     getAllUsers,
     getUserById,
     updateUserRole,
     banUser,
     unBanUser,
-    updateUser
+    updateUser,
+    createUser
 }
