@@ -7,7 +7,8 @@ import ForumPostTopic from "../models/forumPostTopic.model.js";
 import User from "../models/user.model.js";
 import ForumPostVersion from "../models/ForumPostVersion.model.js";
 import Notification from "../models/notification.model.js";
-import { Op } from "sequelize";
+import { Op, Sequelize } from "sequelize";
+import SavePost from "../models/savePost.model.js";
 
 const createForumPost = async (req) => {
     const created_by = req.userId;
@@ -182,6 +183,7 @@ const getApprovedForumPosts = async (req) => {
     const offset = (page - 1) * limit;
 
     const { search, topic_id, sort_by, sort_order, user_id } = req.query;
+    const currentUserId = req.userId;
 
     const where = { status: "approved" };
 
@@ -236,6 +238,16 @@ const getApprovedForumPosts = async (req) => {
         order
     });
 
+    // Lấy danh sách post_id đã lưu của user hiện tại
+    let savedPostIds = [];
+    if (currentUserId) {
+        const savedPosts = await SavePost.findAll({
+            where: { user_id: currentUserId, post_id: forumPosts.map(p => p.id) },
+            attributes: ['post_id']
+        });
+        savedPostIds = savedPosts.map(sp => sp.post_id);
+    }
+
     return {
         data: forumPosts.map(post => ({
             id: post.id,
@@ -244,7 +256,8 @@ const getApprovedForumPosts = async (req) => {
             topics: post.ForumPostTopics?.map(fpt => fpt.Topic) || [],
             createdAt: post.createdAt,
             updatedAt: post.updatedAt,
-            status: post.status
+            status: post.status,
+            is_saved: savedPostIds.includes(post.id)
         })),
         total,
         page,
@@ -624,6 +637,13 @@ const getPostById = async (req) => {
         throw new ForbiddenError("Bạn không có quyền xem bài viết này!");
     }
 
+    // Kiểm tra đã lưu chưa
+    let is_saved = false;
+    if (user_id) {
+        const saved = await SavePost.findOne({ where: { user_id, post_id: id } });
+        is_saved = !!saved;
+    }
+
     // Trả về chỉ topics và creator
     return {
         id: forumPost.id,
@@ -634,7 +654,8 @@ const getPostById = async (req) => {
         updatedAt: forumPost.updatedAt,
         status: forumPost.status,
         topics: forumPost.ForumPostTopics?.map(fpt => fpt.Topic) || [],
-        creator: forumPost.creator
+        creator: forumPost.creator,
+        is_saved
     };
 };
 
@@ -726,6 +747,112 @@ const getForumPostReview = async (req) => {
     };
 };
 
+const saveForumPost = async (req) => {
+    const user_id = req.userId;
+    const { id } = req.params;
+    if (!id) throw new BadRequestError("Thiếu id bài viết!");
+
+    const forumPost = await ForumPost.findByPk(id);
+    if (!forumPost) throw new NotFoundError("Bài viết không tồn tại!");
+
+    const existed = await SavePost.findOne({ where: { user_id, post_id: id } });
+    if (existed) throw new BadRequestError("Bài viết đã được lưu trước đó!");
+
+    await SavePost.create({ user_id, post_id: id });
+    return {};
+}
+
+const getSavedForumPost = async (req) => {
+    const user_id = req.userId;
+    if (!user_id) throw new BadRequestError("Thiếu user_id!");
+
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const offset = (page - 1) * limit;
+    const { search, topic_id } = req.query;
+
+    // Xây dựng include cho topics và creator
+    let forumPostInclude = [
+        {
+            model: ForumPostTopic,
+            include: [
+                {
+                    model: Topic,
+                    attributes: ['id', 'name']
+                }
+            ]
+        },
+        {
+            model: User,
+            as: 'creator',
+            attributes: ['id', 'fullname', 'email', 'avatar']
+        }
+    ];
+    if (topic_id) {
+        forumPostInclude[0].where = { topic_id };
+    }
+
+    // Xây dựng where cho search
+    let forumPostWhere = {};
+    if (search) {
+        forumPostWhere = {
+            ...forumPostWhere,
+            [Op.or]: [
+                { title: { [Op.iLike]: `%${search}%` } },
+                { content: { [Op.iLike]: `%${search}%` } }
+            ]
+        };
+    }
+
+    // Order mặc định theo ngày lưu (SavePost.createdAt DESC)
+    let order = [['createdAt', 'DESC']];
+
+    const { count: total, rows: savedPosts } = await SavePost.findAndCountAll({
+        where: { user_id },
+        include: [{
+            model: ForumPost,
+            attributes: ['id', 'title', 'status', 'createdAt', 'content', 'created_by'],
+            where: forumPostWhere,
+            include: forumPostInclude
+        }],
+        limit,
+        offset,
+        order,
+    });
+    return {
+        data: savedPosts.map(sp => ({
+            id: sp.id,
+            post_id: sp.post_id,
+            createdAt: sp.createdAt,
+            post: sp.ForumPost ? {
+                id: sp.ForumPost.id,
+                title: sp.ForumPost.title,
+                status: sp.ForumPost.status,
+                createdAt: sp.ForumPost.createdAt,
+                content: sp.ForumPost.content,
+                creator: sp.ForumPost.creator,
+                topics: sp.ForumPost.ForumPostTopics?.map(fpt => fpt.Topic) || []
+            } : null
+        })),
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+    };
+}
+
+const deleteSavedForumPost = async (req) => {
+    const user_id = req.userId;
+    const { id } = req.params;
+    if (!id) throw new BadRequestError("Thiếu id bài viết!");
+
+    const savedPost = await SavePost.findOne({ where: { user_id, post_id: id } });
+    if (!savedPost) throw new NotFoundError("Bài viết không tồn tại trong danh sách lưu!");
+    if (savedPost.user_id !== user_id) throw new ForbiddenError("Bạn không có quyền xóa bài viết này!");
+    await savedPost.destroy();
+    return {};
+}
+
 export const forumPostService = {
     createForumPost,
     getForumPosts,
@@ -740,5 +867,8 @@ export const forumPostService = {
     getForumPostByToken,
     getPostById,
     submitForumPost,
-    getForumPostReview
+    getForumPostReview,
+    saveForumPost,
+    getSavedForumPost,
+    deleteSavedForumPost
 };
