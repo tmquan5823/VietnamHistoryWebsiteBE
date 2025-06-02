@@ -185,6 +185,44 @@ const getForumPostReview = async (req, res, next) => {
     }
 };
 
+const saveForumPost = async (req, res, next) => {
+    try {
+        const result = await forumPostService.saveForumPost(req);
+        return res.status(StatusCodes.OK).json({
+            status: "success",  
+            message: "Bài viết đã được lưu thành công!",
+            data: result
+        });
+    } catch(err){
+        next(err);
+    }
+};  
+
+const getSavedForumPost = async (req, res, next) => {
+    try {
+        const result = await forumPostService.getSavedForumPost(req);
+        return res.status(StatusCodes.OK).json({
+            status: "success",
+            message: "Bài viết đã được lấy thành công!",
+            data: result
+        });
+    } catch(err){
+        next(err);
+    }
+};
+
+const deleteSavedForumPost = async (req, res, next) => {
+    try {
+        const result = await forumPostService.deleteSavedForumPost(req);
+        return res.status(StatusCodes.OK).json({
+            status: "success",
+            message: "Bài viết đã được xóa thành công!",
+            data: result
+        });
+    } catch(err){
+        next(err);
+    }
+};
 
 export const forumPostController = {
     createForumPost,
@@ -200,5 +238,8 @@ export const forumPostController = {
     getPostById,
     cancelForumPost,
     submitForumPost,
-    getForumPostReview
+    getForumPostReview,
+    saveForumPost,
+    getSavedForumPost,
+    deleteSavedForumPost
 };

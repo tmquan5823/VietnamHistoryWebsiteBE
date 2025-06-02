@@ -2,30 +2,42 @@ import { DataTypes } from 'sequelize';
 import { sequelize } from '../database/connect.js';
 import User from './user.model.js';
 
-const AdminLog = sequelize.define('AdminLog', {
+const Image = sequelize.define('Image', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
     autoIncrement: true
   },
-  admin_id: {
+  user_id: {
     type: DataTypes.INTEGER,
+    allowNull: false,
     references: {
       model: User,
       key: 'id'
     }
   },
-  action: {
-    type: DataTypes.ENUM('approve_post', 'delete_post', 'approve_quiz', 'delete_quiz', 'other'),
+  url: {
+    type: DataTypes.STRING(500),
     allowNull: false
+  },
+  public_id: {
+    type: DataTypes.STRING(255),
+    allowNull: false
+  },
+  original: {
+    type: DataTypes.STRING(255),
+    allowNull: true
   },
   createdAt: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW
   }
 }, {
-  tableName: 'admin_logs',
+  tableName: 'images',
   timestamps: false
 });
 
-export default AdminLog;
+Image.belongsTo(User, { foreignKey: 'user_id' });
+User.hasMany(Image, { foreignKey: 'user_id' });
+
+export default Image;

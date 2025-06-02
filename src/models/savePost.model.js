@@ -3,23 +3,25 @@ import { sequelize } from '../database/connect.js';
 import User from './user.model.js';
 import ForumPost from './forumPost.model.js';
 
-const ForumPostLike = sequelize.define('ForumPostLike', {
+const SavePost = sequelize.define('SavePost', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
     autoIncrement: true
   },
-  post_id: {
+  user_id: {
     type: DataTypes.INTEGER,
+    allowNull: false,
     references: {
-      model: ForumPost,
+      model: User,
       key: 'id'
     }
   },
-  user_id: {
+  post_id: {
     type: DataTypes.INTEGER,
+    allowNull: false,
     references: {
-      model: User,
+      model: ForumPost,
       key: 'id'
     }
   },
@@ -28,14 +30,13 @@ const ForumPostLike = sequelize.define('ForumPostLike', {
     defaultValue: DataTypes.NOW
   }
 }, {
-  tableName: 'forum_post_likes',
-  timestamps: false,
-  indexes: [
-    {
-      unique: true,
-      fields: ['post_id', 'user_id']
-    }
-  ]
+  tableName: 'save_posts',
+  timestamps: false
 });
 
-export default ForumPostLike; 
+SavePost.belongsTo(User, { foreignKey: 'user_id' });
+SavePost.belongsTo(ForumPost, { foreignKey: 'post_id' });
+User.hasMany(SavePost, { foreignKey: 'user_id' });
+ForumPost.hasMany(SavePost, { foreignKey: 'post_id' });
+
+export default SavePost;
