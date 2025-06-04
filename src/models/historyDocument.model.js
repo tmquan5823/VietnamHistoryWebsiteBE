@@ -62,4 +62,7 @@ const HistoryDocument = sequelize.define('HistoryDocument', {
   timestamps: false
 });
 
+HistoryDocument.belongsTo(Period, { foreignKey: 'period_id' });
+HistoryDocument.belongsTo(DocumentType, { foreignKey: 'type_id' });
+
 export default HistoryDocument; 
