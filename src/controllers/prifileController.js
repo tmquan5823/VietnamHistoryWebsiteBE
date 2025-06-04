@@ -1,5 +1,5 @@
 import { StatusCodes } from "http-status-codes";
-import { profileService } from "../services/prifileService.js";
+import { profileService } from "../services/profileService.js";
 
 const getProfile = async (req, res, next) => {
     try {

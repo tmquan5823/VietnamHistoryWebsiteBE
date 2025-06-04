@@ -16,15 +16,19 @@ const Image = sequelize.define('Image', {
       key: 'id'
     }
   },
-  url: {
+  restored: {
     type: DataTypes.STRING(500),
     allowNull: false
   },
-  public_id: {
+  restored_id: {
     type: DataTypes.STRING(255),
     allowNull: false
   },
   original: {
+    type: DataTypes.STRING(255),
+    allowNull: true
+  },
+  original_id: {
     type: DataTypes.STRING(255),
     allowNull: true
   },
