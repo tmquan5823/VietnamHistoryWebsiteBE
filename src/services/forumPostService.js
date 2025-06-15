@@ -228,7 +228,8 @@ const getApprovedForumPosts = async (req) => {
         ]
     ];
 
-    const total = await ForumPost.count({ where, include });
+    // Đếm tổng số bài viết KHÔNG dùng include để tránh sai lệch do join
+    const total = await ForumPost.count({ where });
 
     const forumPosts = await ForumPost.findAll({
         where,

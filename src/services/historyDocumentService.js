@@ -120,7 +120,7 @@ const updateDocument = async (req) => {
     if (!id) {
         throw new BadRequestError("Thiếu id");
     }
-    const { title, content, type_id, period_id, start_year, end_year, key_words } = req.body;
+    const { title, content, type_id, period_id, start_year, end_year, key_words, image } = req.body;
     if (!title || !content || !type_id || !period_id || !start_year || !end_year) {
         throw new BadRequestError("Thiếu thông tin bắt buộc!");
     }
@@ -128,7 +128,7 @@ const updateDocument = async (req) => {
     if (!document) {
         throw new NotFoundError("Không tìm thấy tài liệu!");
     }
-    await document.update({ title, content, type_id, period_id, start_year, end_year, key_words });
+    await document.update({ title, content, type_id, period_id, start_year, end_year, key_words, image });
     return document;
 };  
 

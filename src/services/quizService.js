@@ -602,13 +602,11 @@ const submitQuizSetForApproval = async (data) => {
     return quizSet;
 };
 
-// Admin duyệt quiz
 const approveQuizSet = async (req) => {
     const { id } = req.params;
     if (!id) {
         throw new BadRequestError("Thiếu id");
     }
-    // Lấy quizSet gốc (cả topic)
     const quizSet = await QuizSet.findByPk(id, {
         raw: true
     });
@@ -619,21 +617,18 @@ const approveQuizSet = async (req) => {
         throw new BadRequestError("Chỉ có thể duyệt bộ câu hỏi đang chờ duyệt");
     }
 
-    // Tạo bản copy với status publish
     const { id: oldId, status, createdAt, updatedAt, ...copyData } = quizSet;
     const publishedQuiz = await QuizSet.create({
         ...copyData,
         status: 'publish'   
     });
 
-    // Copy topic từ quiz gốc sang quiz mới
     const oldQuizSetWithTopics = await QuizSet.findByPk(oldId, {
         include: [{ model: Topic, as: 'topics', attributes: ['id'] }]
     });
     const topicIds = oldQuizSetWithTopics.topics.map(t => t.id);
     await publishedQuiz.setTopics(topicIds);
 
-    // Copy toàn bộ câu hỏi sang quiz mới
     const questions = await QuizQuestion.findAll({ where: { quiz_id: oldId }, raw: true });
     if (questions.length > 0) {
         const copiedQuestions = questions.map(q => {
@@ -762,7 +757,6 @@ const publishQuizSet = async (data) => {
 const createQuizSetWithQuestions = async (data) => {
     const t = await sequelize.transaction();
     try {
-        // 1. Tạo QuizSet
         let { image, title, description, topic_ids, questions, status } = data.body;
         console.log(data);
         const user_id = data.userId;
@@ -773,7 +767,6 @@ const createQuizSetWithQuestions = async (data) => {
         if(status === 'publish'){
             throw new ForbiddenError("Bạn không có quyền tạo bộ câu hỏi đang công khai");
         }
-        // Xử lý topic_ids như createQuizSet
         if (typeof topic_ids === 'string') {
             try {
                 topic_ids = JSON.parse(topic_ids);
@@ -791,18 +784,20 @@ const createQuizSetWithQuestions = async (data) => {
             await quizSet.setTopics(topic_ids, { transaction: t });
         }
 
-        // 2. Tạo các câu hỏi
-        questions = questions.map(q => ({
-            ...q,
-            quiz_id: quizSet.id,
-            action: q.action || 'created'
-        }));
+        questions = questions.map(q => {
+            if (q.question_type === 'reorder') {
+                q.options = q.correct_answers;
+            }
+            return {
+                ...q,
+                quiz_id: quizSet.id,
+                action: q.action || 'created'
+            };
+        });
         const quizQuestions = await QuizQuestion.bulkCreate(questions, { transaction: t });
 
-        // 3. Commit transaction
         await t.commit();
 
-        // 4. Lấy lại thông tin QuizSet (có thể include topics)
         const quizSetDetail = await QuizSet.findByPk(quizSet.id, {
             include: [
                 {
@@ -899,7 +894,6 @@ const getQuizSetWithQuestionsForPlay = async (data) => {
         order: [['number', 'ASC']]
     });
     const questionCount = await questions.length;
-    // Loại bỏ correct_answers và funfact khỏi mỗi question
     function shuffleArray(array) {
         for (let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -909,7 +903,6 @@ const getQuizSetWithQuestionsForPlay = async (data) => {
     }
     const questionsForPlay = questions.map(q => {
         const { quiz_id, image_public_id, createdAt, updatedAt, correct_answers, funfact, ...rest } = q.toJSON();
-        // Trộn options nếu có
         if (rest.options) {
             try {
                 let opts = JSON.parse(rest.options);
@@ -918,7 +911,6 @@ const getQuizSetWithQuestionsForPlay = async (data) => {
                     rest.options = JSON.stringify(opts);
                 }
             } catch (e) {
-                // Nếu không parse được thì bỏ qua
             }
         }
         return rest;
@@ -942,18 +934,15 @@ const updateQuizSetWithQuestions = async (data) => {
     try {
         let { id, image, title, description, topic_ids, questions, status } = data.body;
         if (!id) throw new BadRequestError("Thiếu id");
-        // Lấy quiz set hiện tại
         const quizSet = await QuizSet.findByPk(id, { transaction: t });
         if (!quizSet) throw new NotFoundError("Quiz set không tồn tại");
 
-        // Nếu không truyền status thì đặt lại là 'unpublish'
         if (status === 'approved' || status === null) {
             status = 'unpublish';
         }
         if(status === 'publish'){
             throw new ForbiddenError("Bạn không có quyền cập nhật bộ câu hỏi đang công khai");
         }
-        // Xử lý topic_ids
         if (typeof topic_ids === 'string') {
             try {
                 topic_ids = JSON.parse(topic_ids);
@@ -963,7 +952,6 @@ const updateQuizSetWithQuestions = async (data) => {
             }
         }
 
-        // Cập nhật quiz set
         await quizSet.update(
             {
                 image,
@@ -975,30 +963,26 @@ const updateQuizSetWithQuestions = async (data) => {
             { transaction: t }
         );
 
-        // Cập nhật topics
         if (topic_ids && Array.isArray(topic_ids)) {
             await quizSet.setTopics(topic_ids, { transaction: t });
         }
 
-        // Xử lý questions: Cập nhật/xóa/thêm từng câu hỏi thay vì xóa hết tạo lại
         if (questions && Array.isArray(questions)) {
-            // 1. Lấy danh sách id câu hỏi cũ
             const oldQuestions = await QuizQuestion.findAll({ where: { quiz_id: id }, transaction: t });
             const oldIds = oldQuestions.map(q => q.id);
 
-            // 2. Lấy danh sách id câu hỏi mới (có id)
             const newIds = questions.filter(q => q.id).map(q => q.id);
 
-            // 3. Xác định id cần xóa
             const idsToDelete = oldIds.filter(oldId => !newIds.includes(oldId));
             if (idsToDelete.length > 0) {
                 await QuizQuestion.destroy({ where: { id: idsToDelete }, transaction: t });
             }
 
-            // 4. Cập nhật các câu hỏi cũ
             for (const q of questions) {
+                if (q.question_type === 'reorder' && q.correct_answers) {
+                    q.options = q.correct_answers;
+                }
                 if (q.id) {
-                    // Không update id, quiz_id
                     const { id: qid, quiz_id, ...updateFields } = q;
                     await QuizQuestion.update(
                         { ...updateFields },
@@ -1007,8 +991,12 @@ const updateQuizSetWithQuestions = async (data) => {
                 }
             }
 
-            // 5. Thêm mới các câu hỏi chưa có id
-            const newQuestions = questions.filter(q => !q.id).map(q => ({ ...q, quiz_id: id }));
+            const newQuestions = questions.filter(q => !q.id).map(q => {
+                if (q.question_type === 'reorder' && q.correct_answers) {
+                    q.options = q.correct_answers;
+                }
+                return { ...q, quiz_id: id };
+            });
             if (newQuestions.length > 0) {
                 await QuizQuestion.bulkCreate(newQuestions, { transaction: t });
             }
@@ -1016,7 +1004,6 @@ const updateQuizSetWithQuestions = async (data) => {
 
         await t.commit();
 
-        // Lấy lại quiz set chi tiết
         const quizSetDetail = await QuizSet.findByPk(id, {
             include: [
                 {
@@ -1028,7 +1015,6 @@ const updateQuizSetWithQuestions = async (data) => {
             ]
         });
 
-        // Lấy lại questions
         const quizQuestions = await QuizQuestion.findAll({ where: { quiz_id: id } });
 
         return {
@@ -1062,12 +1048,12 @@ const getQuizResults = async (data) => {
         },
         include: [{
             model: QuizQuestion,
-            as: 'question', // Đảm bảo association đúng tên alias
+            as: 'question',
             attributes: ['number']
-        }]
+        }],
+        order: [[{ model: QuizQuestion, as: 'question' }, 'number', 'ASC']]
     });
 
-    // Map để thêm trường number vào từng kết quả
     const quizResultsWithNumber = quizResults.map(qr => {
         const qrObj = qr.toJSON();
         return {
@@ -1076,7 +1062,6 @@ const getQuizResults = async (data) => {
         };
     });
 
-    // Lấy toàn bộ leaderboard để tính ranking
     const allLeaderboard = await QuizLeaderboard.findAll({
         where: { quiz_id: id },
         order: [
@@ -1085,12 +1070,10 @@ const getQuizResults = async (data) => {
         ]
     });
 
-    // Tìm vị trí của user hiện tại
     const ranking = allLeaderboard.findIndex(
         entry => entry.user_id === user_id
-    ) + 1; // +1 vì index bắt đầu từ 0
+    ) + 1;
 
-    // Lấy record của user hiện tại
     const leaderboard = allLeaderboard.find(entry => entry.user_id === user_id);
 
     return {
@@ -1119,7 +1102,6 @@ const getQuizLeaderboard = async (data) => {
         ]
     });
 
-    // Đưa thông tin user vào kết quả trả về
     return leaderboard.map(entry => {
         const data = entry.toJSON();
         return {

@@ -11,7 +11,7 @@ const HistoryDocument = sequelize.define('HistoryDocument', {
     autoIncrement: true
   },
   image: {
-    type: DataTypes.STRING(255)
+    type: DataTypes.TEXT
   },
   title: {
     type: DataTypes.STRING(255)
@@ -40,7 +40,7 @@ const HistoryDocument = sequelize.define('HistoryDocument', {
     type: DataTypes.INTEGER
   },
   key_words: {
-    type: DataTypes.TEXT  // hoặc STRING(500) nếu bạn muốn giới hạn độ dài
+    type: DataTypes.TEXT 
   },
   uploaded_by: {
     type: DataTypes.INTEGER,

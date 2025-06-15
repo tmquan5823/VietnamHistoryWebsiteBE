@@ -69,10 +69,40 @@ const refreshToken = async (req, res, next) => {
     }
 }
 
+//Forgot Password
+const forgotPassword = async (req, res, next) => {
+    try{
+        const result = await authService.forgotPassword(req);
+        return res.status(StatusCodes.OK).json({
+            status: "success",
+            message: "Mã xác thực đã được gửi về email của bạn!",
+            data: result
+        });
+    } catch(error){
+        next(error);
+    }
+}
+
+//Reset Password
+const resetPassword = async (req, res, next) => {
+    try{
+        const result = await authService.resetPassword(req);
+        return res.status(StatusCodes.OK).json({
+            status: "success",
+            message: "Mật khẩu đã được cập nhật thành công!",
+            data: result
+        });
+    } catch(error){
+        next(error);
+    }
+}   
+
 export const authController = {
     signUp,
     verifyOTP,
     resendOTP,
     login,
-    refreshToken
+    refreshToken,
+    forgotPassword,
+    resetPassword
 };
