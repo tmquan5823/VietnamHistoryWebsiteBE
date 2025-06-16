@@ -186,7 +186,8 @@ const login = async (data) => {
         });
 
         if(!is_verified){
-            throw new ForbiddenError("Tài khoản chưa được xác thực, vui lòng xác thực để đăng nhập!");
+            await sendOTPVerificationEmail(user);
+            throw new ForbiddenError("Tài khoản chưa được xác thực, mã xác thực đã được gửi lại email của bạn!");
         }
 
         if(user.isBanned){
@@ -297,10 +298,75 @@ const refreshToken = async (data) => {
     }
 };
 
+// Quên mật khẩu - gửi OTP về email
+const forgotPassword = async (data) => {
+    try {
+        const { email } = data.body;
+        if (!email) {
+            throw new BadRequestError("Vui lòng nhập email!");
+        }
+        const user = await User.findOne({ where: { email } });
+        if (!user) {
+            throw new NotFoundError("Không tìm thấy tài khoản với email này!");
+        }
+        // Xóa các OTP cũ chưa xác thực (nếu có)
+        await EmailVerification.destroy({
+            where: {
+                user_id: user.id,
+                is_verified: false
+            }
+        });
+        await sendOTPVerificationEmail(user);
+        return { message: "Mã xác thực đã được gửi về email của bạn!" };
+    } catch (error) {
+        throw error;
+    }
+};
+
+// Đặt lại mật khẩu với OTP
+const resetPassword = async (data) => {
+    try {
+        const { email, otp, newPassword } = data.body;
+        if (!email || !otp || !newPassword) {
+            throw new BadRequestError("Thiếu thông tin cần thiết!");
+        }
+        const user = await User.findOne({ where: { email } });
+        if (!user) {
+            throw new NotFoundError("Không tìm thấy tài khoản với email này!");
+        }
+        const verification = await EmailVerification.findOne({
+            where: {
+                user_id: user.id,
+                is_verified: false
+            }
+        });
+        if (!verification) {
+            throw new BadRequestError("Không tìm thấy mã xác thực, vui lòng yêu cầu mã mới!");
+        }
+        if (verification.expires_at < new Date()) {
+            throw new BadRequestError("Mã OTP đã hết hạn. Vui lòng yêu cầu mã mới.");
+        }
+        if (verification.otp_code !== String(otp)) {
+            throw new BadRequestError("Mã OTP không hợp lệ!");
+        }
+        // Đặt lại mật khẩu
+        const saltRounds = SALT_ROUNDS;
+        const hashedPass = await bcrypt.hash(newPassword, saltRounds);
+        await user.update({ password: hashedPass });
+        // Đánh dấu OTP đã dùng
+        await verification.update({ is_verified: true });
+        return { message: "Đặt lại mật khẩu thành công!" };
+    } catch (error) {
+        throw error;
+    }
+};
+
 export const authService = {
     signUp,
     verifyOTP,
     resendOTP,
     login,
-    refreshToken
+    refreshToken,
+    forgotPassword,
+    resetPassword
 };

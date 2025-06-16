@@ -6,6 +6,12 @@ dotenv.config();
 // Khởi tạo sequelize instance
 const sequelize = new Sequelize(process.env.POSTGRESQL_URI, {
     dialect: 'postgres',
+    dialectOptions: {
+        ssl: {
+          require: true,
+          rejectUnauthorized: false
+        }
+    },
     logging: false,
     pool: {
         max: 5,

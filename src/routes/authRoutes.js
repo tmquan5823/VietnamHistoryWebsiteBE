@@ -11,6 +11,8 @@ router.route("/sign-up").post(authValidation.signUp, authController.signUp);
 router.route("/login").post(authController.login);
 router.route("/resend-otp").post(authController.resendOTP);
 router.route("/verify").post(authController.verifyOTP);
-router.route("/refresh").post(Auth.ignoreExpirationAuth, authController.refreshToken);
+router.route("/refresh").post(Auth.ignoreExpirationAuth, authController.refreshToken);  
+router.route("/forgot-password").post(authController.forgotPassword);
+router.route("/reset-password").post(authController.resetPassword);
 
 export default router;
